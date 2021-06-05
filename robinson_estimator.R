@@ -247,15 +247,7 @@ result <- result %>%
                    `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
                    `MSE E[X|Z]` = mean(resid_data$X.star^2)))
 
-result_mileage <- result
-result_load_error <- result
-result_ngprice <- result
-result_convergence <- result
-result_thermal_np15 <- result
-result_solar_zp26 <- result
-result_load_pge <- result
-result_load_sdge <- result
-result_load_sce <- result
+
 
 
 
