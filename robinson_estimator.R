@@ -1,9 +1,5 @@
-
-setwd("~/Documents/SU/Research/uplift_study/data/CAISO")
-
-load("cleaned_data/model_data_completeObs.RData")
-#load("cleaned_data/model_data_allObs.RData")
-load("boosting_results/backward_selection.RData")
+load("data/model_data_completeObs.RData")
+load("data/backward_selection.RData")
 
 library(dbarts)
 library(tidyverse)
@@ -11,6 +7,10 @@ library(gbm)
 library(glmnet)
 library(lmtest)
 library(sandwich)
+
+############# INPUT: Specify the variable X ##############
+focal_covariate <- "Load.Mileage.MW"
+##########################################################
 
 set.seed(20210504)
 fold_counts <- c(146,146,145,145,145)
@@ -22,16 +22,7 @@ for (i in 1:5) {
 
 # Tibble for results
 result <- tibble()
-
-# Specify focal covariate and desired units
-focal_covariate <- "Load.SCE"
 dep_var <- "log(CC6620)"
-# cov_reduce_mag <- c("Load.Mileage.MW", "DA.LoadError.Over", "Convergence.Max.Supply")
-# Reduce order of magnitude
-# if (focal_covariate %in% cov_reduce_mag) {
-#   model_data[,focal_covariate] <- model_data[,focal_covariate] / 1000
-# }
-# Normalize
 model_data[,focal_covariate] <- (model_data[,focal_covariate] - mean(unlist(model_data[,focal_covariate]))) / sd(unlist(model_data[,focal_covariate]))
 
 # Function to build model formulas
@@ -247,7 +238,4 @@ result <- result %>%
                    `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
                    `MSE E[X|Z]` = mean(resid_data$X.star^2)))
 
-
-
-
-
+print(result)
