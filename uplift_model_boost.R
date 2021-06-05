@@ -9,8 +9,6 @@ library(gbm)
 
 load("data/model_data_completeObs.RData")
 
-########### BOOSTED TREE #############
-
 set.seed(20210504)
 fold_counts <- c(146,146,145,145,145)
 sample_ix <- sample(1:nrow(model_data))
@@ -18,6 +16,8 @@ test <- list()
 for (i in 1:5) {
   test[[i]] <- sample_ix[(sum(fold_counts[0:(i-1)])+1):sum(fold_counts[0:i])]
 }
+
+########### BEGIN: TUNING OF BOOSTED REGRESSION TREE #############
 
 grid <- seq(from = 0.001, by = 0.001, length.out = 20) 
 result <- tibble()
@@ -47,7 +47,10 @@ for (d in 5:12) {
   }
 }
 
-### UPDATED BACKWARD STEPWISE BOOSTED ALGORITHM
+########### END: TUNING OF BOOSTED REGRESSION TREE #############
+
+########### BEGIN: BACKWARD STEPWISE BOOSTED ALGORITHM ###########
+
 min.depth <- 9
 min.shrinkage <- 0.007
 covariates <- colnames(model_data)
@@ -125,6 +128,10 @@ while(iter <= max_iter) {
   iter <- iter + 1
 }
 
+################ END: BACKWARD STEPWISE BOOSTED ALGORITHM ###########
+
+########### BEGIN: FIT CROSS-FIT REDUCED MODEL ###########
+
 # Fit reduced model
 cat(paste0("Running:\n"))
 model_f <- buildFormula(dep_var, covariates)
@@ -140,6 +147,9 @@ tibble(
 
 save(y_hat, file = "boosting_results/yhat_reduced_CF_boost.RData")
 
+########### END: FIT CROSS-FIT REDUCED MODEL ###########
+
+########### BEGIN: FIT FULL MODEL ###########
 ## Fit full dataset, to view variable importance
 boost.uplift.full <- gbm(model_f, 
                       data = model_data, 
@@ -150,4 +160,5 @@ save(boost.uplift.full, file="boosting_results/boost_uplift_noCF.RData")
 
 plot(boost.uplift.full, i="Load.Mileage.MW")
 
+########### END: FIT FULL MODEL ###########
 
