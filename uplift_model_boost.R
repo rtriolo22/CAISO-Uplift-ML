@@ -9,30 +9,33 @@ library(gbm)
 
 load("data/model_data_completeObs.RData")
 
+## SETTINGS ##
+num_folds <- 5
+shrinkage_vals <- seq(from = 0.001, by = 0.001, length.out = 20)
+depth_vals <- 5:12
+num_trees <- 1000
+
+source("lib/utilities.R")
+
 set.seed(20210504)
-fold_counts <- c(146,146,145,145,145)
-sample_ix <- sample(1:nrow(model_data))
-test <- list()
-for (i in 1:5) {
-  test[[i]] <- sample_ix[(sum(fold_counts[0:(i-1)])+1):sum(fold_counts[0:i])]
-}
+test_ids <- nrow(model_data) %>% drawFolds(K = num_folds)
 
 ########### BEGIN: TUNING OF BOOSTED REGRESSION TREE #############
 
-grid <- seq(from = 0.001, by = 0.001, length.out = 20) 
+grid <- shrinkage_vals
 result <- tibble()
 
-for (d in 5:12) {
+for (d in depth_vals) {
   cat(paste0("Depth: ",d,"\n"))
   for (g in grid) {
     cat(paste0("  Shrinkage: ",g,"\n"))
     sq.error <- c()
     for (k in 1:5) {
       cat(paste0("    Fold: ",k,"\n"))
-      test_ix <- test[[k]]
+      test_ix <- test_ids[[k]]
       boost.uplift <- gbm(log(CC6620) ~ . - Date - Year - CC6630 - CC66200, 
                         data = model_data[-test_ix,], 
-                        distribution = "gaussian", n.trees = 5000, interaction.depth = d, 
+                        distribution = "gaussian", n.trees = num_trees, interaction.depth = d, 
                         shrinkage = g)
       y.hat.boost <- predict(boost.uplift, newdata = model_data[test_ix,], n.trees = 5000)
       uplift.test <- model_data$CC6620[test_ix] %>% log
@@ -91,7 +94,7 @@ cf_gbm <- function(model_f, data, folds, min.depth, min.shrinkage) {
 # Fit full model
 cat(paste0("Running:\n"))
 model_f <- buildFormula(dep_var, covariates)
-y_hat <- cf_gbm(model_f, model_data, test, min.depth, min.shrinkage)
+y_hat <- cf_gbm(model_f, model_data, test_ids, min.depth, min.shrinkage)
 mse_min <- mean((y_hat - log(model_data$CC6620))^2)
   
 result_table <- tibble(
@@ -108,7 +111,7 @@ while(iter <= max_iter) {
     cat(paste0("Drop var: ",c,"\n"))
     covariates_i <- covariates[covariates != c]
     model_f <- buildFormula(dep_var, covariates_i)
-    y_hat <- cf_gbm(model_f, model_data, test, min.depth, min.shrinkage)
+    y_hat <- cf_gbm(model_f, model_data, test_ids, min.depth, min.shrinkage)
     mse_c <- c(mse_c, mean((y_hat - log(model_data$CC6620))^2))
   }
   
@@ -135,7 +138,7 @@ while(iter <= max_iter) {
 # Fit reduced model
 cat(paste0("Running:\n"))
 model_f <- buildFormula(dep_var, covariates)
-y_hat <- cf_gbm(model_f, model_data, test, min.depth, min.shrinkage)
+y_hat <- cf_gbm(model_f, model_data, test_ids, min.depth, min.shrinkage)
 
 tibble(
   Type = c(rep("Predicted", 727), rep("Actual", 727)) %>% as.factor,
