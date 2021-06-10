@@ -35,7 +35,7 @@ tuneBoostedTree <- function(data, shrinkage_vals, depth_vals, num_trees) {
                             data = data[-test_ix,], 
                             distribution = "gaussian", n.trees = num_trees, interaction.depth = d, 
                             shrinkage = g)
-        y.hat.boost <- predict(boost.uplift, newdata = data[test_ix,], n.trees = 5000)
+        y.hat.boost <- predict(boost.uplift, newdata = data[test_ix,], n.trees = num_trees)
         uplift.test <- data$CC6620[test_ix] %>% log
         sq.error <- c(sq.error, (y.hat.boost - uplift.test)^2)
       }

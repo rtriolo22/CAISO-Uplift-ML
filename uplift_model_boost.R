@@ -1,57 +1,39 @@
 
-library(tidyverse)
-library(lubridate)
+library(gbm)
 library(glmnet)
 library(lmtest)
+library(lubridate)
+library(rjson)
 library(sandwich)
-library(RColorBrewer)
-library(gbm)
+library(tidyverse)
 
+# Load settings, data, and utility functions
+settings <- fromJSON(file = "config.json")
 load("data/model_data_completeObs.RData")
-
-## SETTINGS ##
-num_folds <- 5
-shrinkage_vals <- seq(from = 0.001, by = 0.001, length.out = 20)
-depth_vals <- 5:12
-num_trees <- 1000
-
 source("lib/utilities.R")
 
-set.seed(20210504)
-test_ids <- nrow(model_data) %>% drawFolds(K = num_folds)
+# Create settings variables
+set.seed(settings$random_seed)
+num_folds <- settings$num_folds
+shrinkage_vals <- seq(from = settings$boost_tuning$shrinkage_vals$from, 
+                      by = settings$boost_tuning$shrinkage_vals$by, 
+                      length.out = settings$boost_tuning$shrinkage_vals$length.out)
+depth_vals <- (settings$boost_tuning$depth_vals$min):(settings$boost_tuning$depth_vals$max)
+num_trees <- settings$boost_tuning$num_trees
 
 ########### BEGIN: TUNING OF BOOSTED REGRESSION TREE #############
-
-grid <- shrinkage_vals
-result <- tibble()
-
-for (d in depth_vals) {
-  cat(paste0("Depth: ",d,"\n"))
-  for (g in grid) {
-    cat(paste0("  Shrinkage: ",g,"\n"))
-    sq.error <- c()
-    for (k in 1:5) {
-      cat(paste0("    Fold: ",k,"\n"))
-      test_ix <- test_ids[[k]]
-      boost.uplift <- gbm(log(CC6620) ~ . - Date - Year - CC6630 - CC66200, 
-                        data = model_data[-test_ix,], 
-                        distribution = "gaussian", n.trees = num_trees, interaction.depth = d, 
-                        shrinkage = g)
-      y.hat.boost <- predict(boost.uplift, newdata = model_data[test_ix,], n.trees = 5000)
-      uplift.test <- model_data$CC6620[test_ix] %>% log
-      sq.error <- c(sq.error, (y.hat.boost - uplift.test)^2)
-    }
-    result_i <- tibble(
-      Depth = d,
-      Shrinkage = g,
-      MSE = mean(sq.error)
-    )
-    result <- result %>% bind_rows(result_i)
-  }
+if(settings$boost_tuning$run_boost_tuning) {
+  tuning_result <- model_data %>% tuneBoostedTree(shrinkage_vals, depth_vals, num_trees)
+  save(tuning_result, file = "output/tuning_result.RData")
 }
 
 ########### END: TUNING OF BOOSTED REGRESSION TREE #############
 
+tuning_result %>% ggplot(aes(x = Shrinkage, y = MSE, color = as.factor(Depth))) +
+  geom_line()
+
+
+min(tuning_result$MSE)
 ########### BEGIN: BACKWARD STEPWISE BOOSTED ALGORITHM ###########
 
 min.depth <- 9

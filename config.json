@@ -1,0 +1,17 @@
+{ 
+	"random_seed" : 20210504,
+	"num_folds" : 5,
+	"boost_tuning" : {
+		"run_boost_tuning" : true,
+		"shrinkage_vals" : {
+			"from" : 0.004,
+			"by" : 0.001,
+			"length.out" : 8
+		},
+		"depth_vals" : {
+			"min" : 8,
+			"max" : 10
+		},
+		"num_trees" : 1000
+	}
+}
