@@ -1,17 +1,25 @@
 { 
 	"random_seed" : 20210504,
 	"num_folds" : 5,
+	"y_var" : "CC6620",
+	"exclude_variables" : ["Date","CC6630","CC6620","CC66200","Year"],
+	"boost_min_depth" : 9,
+	"boost_min_shrinkage" : 0.007,
 	"boost_tuning" : {
-		"run_boost_tuning" : true,
+		"run_boost_tuning" : false,
 		"shrinkage_vals" : {
-			"from" : 0.004,
+			"from" : 0.005,
 			"by" : 0.001,
-			"length.out" : 8
+			"length.out" : 3
 		},
 		"depth_vals" : {
 			"min" : 8,
 			"max" : 10
 		},
 		"num_trees" : 1000
+	},
+	"boost_backward_selection" : {
+		"run_backward_stepwise" : true,
+		"exit_threshold" : 0.05
 	}
 }
