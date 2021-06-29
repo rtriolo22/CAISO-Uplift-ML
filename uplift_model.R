@@ -20,13 +20,16 @@ shrinkage_vals <- seq(from = settings$boost_tuning$shrinkage_vals$from,
                       by = settings$boost_tuning$shrinkage_vals$by, 
                       length.out = settings$boost_tuning$shrinkage_vals$length.out)
 depth_vals <- (settings$boost_tuning$depth_vals$min):(settings$boost_tuning$depth_vals$max)
-num_trees <- settings$boost_tuning$num_trees
+num_trees <- settings$num_trees
 dep_var <- settings$y_var
 covariates <- colnames(model_data)
 covariates <- covariates[!(covariates %in% settings$exclude_variables)]
 min_depth <- settings$boost_min_depth
 min_shrinkage <- settings$boost_min_shrinkage
 selection_threshold <- settings$boost_backward_selection$exit_threshold
+
+# Cap minimum values at 1 (log values at 0)
+model_data[,dep_var] <- model_data[,dep_var] %>% unlist %>% map_dbl(function(x){ifelse(x < 1, 1, x)})
 
 # Draw folds for cross-fitting
 test_folds <- drawFolds(n, K = num_folds)
