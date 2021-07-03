@@ -102,7 +102,7 @@ backwardStepwiseSelection <- function(data, dep_var, covariates, test_ids, min_d
   
   # Start backward stepwise selection loop
   iter <- 1
-  while(iter <= max_iter) {
+  while(iter < max_iter) {
     mse_c <- c()
     for (c in covariates) {
       cat(paste0("Drop var: ",c,"\n"))
