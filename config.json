@@ -7,7 +7,7 @@
 	"boost_min_shrinkage" : 0.003,
 	"num_trees" : 5000,
 	"boost_tuning" : {
-		"run_boost_tuning" : false,
+		"run_boost_tuning" : true,
 		"shrinkage_vals" : {
 			"from" : 0.001,
 			"by" : 0.001,
@@ -19,7 +19,11 @@
 		}
 	},
 	"boost_backward_selection" : {
-		"run_backward_stepwise" : true,
+		"run_backward_stepwise" : false,
 		"exit_threshold" : 0.5
+	},
+	"boost_reduced_cf" : {
+		"run_reduced_cf" : false,
+		"market" : "DAM"
 	}
 }

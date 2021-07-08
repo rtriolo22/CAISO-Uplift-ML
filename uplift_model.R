@@ -27,6 +27,7 @@ covariates <- covariates[!(covariates %in% settings$exclude_variables)]
 min_depth <- settings$boost_min_depth
 min_shrinkage <- settings$boost_min_shrinkage
 selection_threshold <- settings$boost_backward_selection$exit_threshold
+cf_market <- settings$boost_reduced_cf$market
 
 # Cap minimum values at 1 (log values at 0)
 model_data[,dep_var] <- model_data[,dep_var] %>% unlist %>% map_dbl(function(x){ifelse(x < 1, 1, x)})
@@ -49,7 +50,11 @@ if (settings$boost_backward_selection$run_backward_stepwise) {
   save(selection_result, settings, file = "output/selection_result.RData")
 }
 
-########### BEGIN: FIT CROSS-FIT REDUCED MODEL ###########
+########### FIT CROSS-FIT REDUCED MODEL ###########
+if (settings$boost_reduced_cf$run_reduced_cf) {
+  y_hat_cf <- model_data %>%
+    crossFitReducedGBM(dep_var, covariates, test_folds, min_depth, min_shrinkage, num_trees, market)
+}
 # 
 # # Fit reduced model
 # cat(paste0("Running:\n"))
