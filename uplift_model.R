@@ -22,7 +22,8 @@ args <- commandArgs(trailingOnly = TRUE)
 local_path <- ifelse(length(args) > 0, args[1], "")
 
 # Load settings, data, and utility functions
-settings <- fromJSON(file = "config.json")
+config_f <- paste0(local_path, "config.json")
+settings <- fromJSON(file = config_f)
 model_data_f <- paste0(local_path, "data/model_data_completeObs.RData")
 load("data/model_data_completeObs.RData")
 source("lib/utilities.R")
@@ -54,7 +55,8 @@ test_folds <- drawFolds(n, K = num_folds)
 if (settings$boost_tuning$run_boost_tuning) {
   tuning_result <- model_data %>% 
     tuneBoostedTree(dep_var, covariates, shrinkage_vals, depth_vals, num_trees, test_folds)
-  save(tuning_result, settings, file = "output/tuning_result.RData")
+  result_f <- paste0(local_path, "output/tuning_result_",dep_var,".RData")
+  save(tuning_result, settings, file = result_f)
 }
 
 ########### BACKWARD STEPWISE BOOSTED REGRESSION TREE ###########
