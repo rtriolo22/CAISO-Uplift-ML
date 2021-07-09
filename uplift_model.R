@@ -25,8 +25,9 @@ local_path <- ifelse(length(args) > 0, args[1], "")
 config_f <- paste0(local_path, "config.json")
 settings <- fromJSON(file = config_f)
 model_data_f <- paste0(local_path, "data/model_data_completeObs.RData")
-load("data/model_data_completeObs.RData")
-source("lib/utilities.R")
+load(model_data_f)
+utilities_f <- paste0(local_path, "lib/utilities.R")
+source(utilities_f)
 
 # Create settings variables
 set.seed(settings$random_seed)
