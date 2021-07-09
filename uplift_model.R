@@ -1,14 +1,29 @@
 
-library(gbm)
-library(glmnet)
-library(lmtest)
-library(lubridate)
-library(rjson)
-library(sandwich)
-library(tidyverse)
+#####################################################################################
+#                                                                                   #
+#  Triolo, R.C. and Wolak, F.A. (Forthcoming)                                       #
+#  Market Conditions and Uplift Costs in the California Electricity Market          #
+#                                                                                   #
+#  Open source code for reproduction of results                                     #
+#                                                                                   #
+#####################################################################################
+
+# Load necessary packages
+suppressPackageStartupMessages(library(gbm))
+suppressPackageStartupMessages(library(glmnet))
+suppressPackageStartupMessages(library(lmtest))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(rjson))
+suppressPackageStartupMessages(library(sandwich))
+suppressPackageStartupMessages(library(tidyverse))
+
+# Set local path, if provided
+args <- commandArgs(trailingOnly = TRUE)
+local_path <- ifelse(length(args) > 0, args[1], "")
 
 # Load settings, data, and utility functions
 settings <- fromJSON(file = "config.json")
+model_data_f <- paste0(local_path, "data/model_data_completeObs.RData")
 load("data/model_data_completeObs.RData")
 source("lib/utilities.R")
 

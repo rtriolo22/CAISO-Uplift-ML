@@ -28,6 +28,8 @@ buildFormula <- function(dep_var, covariates) {
 # Run boosted tree for all shrinkage and depth values
 tuneBoostedTree <- function(data, dep_var, covariates, shrinkage_vals, depth_vals, num_trees, test_ids) {
   
+  cat("\nRunning tuning of boosted gradient tree\n")
+  cat(paste0("Dependent variable: log(", dep_var, ")\n\n"))
   result <- tibble()
   f <- paste0("log(", dep_var, ")") %>% buildFormula(covariates)
   
@@ -36,8 +38,9 @@ tuneBoostedTree <- function(data, dep_var, covariates, shrinkage_vals, depth_val
     for (g in shrinkage_vals) {
       cat(paste0("  Shrinkage: ",g,"\n"))
       sq.error <- c()
-      for (k in 1:5) {
-        cat(paste0("    Fold: ",k,"\n"))
+      cat("    Fold: ")
+      for (k in 1:(length(test_folds))) {
+        cat(paste0(" ",k," "))
         test_ix <- test_ids[[k]]
         boost.uplift <- gbm(f, 
                             data = data[-test_ix,], 
@@ -47,6 +50,7 @@ tuneBoostedTree <- function(data, dep_var, covariates, shrinkage_vals, depth_val
         uplift.test <- data[test_ix, dep_var] %>% log %>% unlist
         sq.error <- c(sq.error, (y.hat.boost - uplift.test)^2)
       }
+      cat("\n")
       result_i <- tibble(
         Depth = d,
         Shrinkage = g,
