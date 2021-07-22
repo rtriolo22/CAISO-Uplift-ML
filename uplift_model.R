@@ -28,6 +28,11 @@ model_data_f <- paste0(local_path, "data/model_data_completeObs.RData")
 load(model_data_f)
 utilities_f <- paste0(local_path, "lib/utilities.R")
 source(utilities_f)
+messages_f <- paste0(local_path, "lib/messages.R")
+source(messages_f)
+
+# Print begin message
+beginMessage()
 
 # Create settings variables
 set.seed(settings$random_seed)
@@ -46,8 +51,15 @@ min_shrinkage <- settings$boost_min_shrinkage
 selection_threshold <- settings$boost_backward_selection$exit_threshold
 cf_market <- settings$boost_reduced_cf$market
 
+# Print status messages
+dependentVariableMessage(dep_var)
+printProcessStatus(settings)
+
 # Cap minimum values at 1 (log values at 0)
-model_data[,dep_var] <- model_data[,dep_var] %>% unlist %>% map_dbl(function(x){ifelse(x < 1, 1, x)})
+if (min(model_data[,dep_var]) < 1) {
+  printZeroValueAdjustment(dep_var)
+  model_data[,dep_var] <- model_data[,dep_var] + 1
+}
 
 # Draw folds for cross-fitting
 test_folds <- drawFolds(n, K = num_folds)
@@ -57,7 +69,7 @@ if (settings$boost_tuning$run_boost_tuning) {
   tuning_result <- model_data %>% 
     tuneBoostedTree(dep_var, covariates, shrinkage_vals, depth_vals, num_trees, test_folds)
   result_f <- paste0(local_path, "output/tuning_result_",dep_var,".RData")
-  save(tuning_result, settings, file = result_f)
+  save(tuning_result, settings, test_folds, file = result_f)
 }
 
 ########### BACKWARD STEPWISE BOOSTED REGRESSION TREE ###########
