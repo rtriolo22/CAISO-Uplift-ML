@@ -77,7 +77,8 @@ if (settings$boost_backward_selection$run_backward_stepwise) {
   selection_result <- model_data %>% 
     backwardStepwiseSelection(dep_var, covariates, test_folds, min_depth, min_shrinkage, selection_threshold,
                               num_trees)
-  save(selection_result, settings, file = "output/selection_result.RData")
+  result_f <- paste0(local_path, "output/selection_result_",dep_var,".RData")
+  save(selection_result, settings, file = result_f)
 }
 
 ########### FIT CROSS-FIT REDUCED MODEL ###########
