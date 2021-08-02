@@ -49,7 +49,6 @@ covariates <- covariates[!(covariates %in% settings$exclude_variables)]
 min_depth <- settings$boost_min_depth
 min_shrinkage <- settings$boost_min_shrinkage
 selection_threshold <- settings$boost_backward_selection$exit_threshold
-cf_market <- settings$boost_reduced_cf$market
 
 # Print status messages
 dependentVariableMessage(dep_var)
@@ -83,9 +82,13 @@ if (settings$boost_backward_selection$run_backward_stepwise) {
 
 ########### FIT CROSS-FIT REDUCED MODEL ###########
 if (settings$boost_reduced_cf$run_reduced_cf) {
+  result_file <- paste0(local_path,"results/selection_result_",dep_var,".RData")
   y_hat_cf <- model_data %>%
-    crossFitReducedGBM(dep_var, covariates, test_folds, min_depth, min_shrinkage, num_trees, market)
+    crossFitReducedGBM(dep_var, covariates, test_folds, min_depth, min_shrinkage, num_trees, result_file)
+  result_f <- paste0(local_path, "output/cf_reduced_",dep_var,".RData")
+  save(y_hat_cf, settings, file = result_f)
 }
+
 # 
 # # Fit reduced model
 # cat(paste0("Running:\n"))

@@ -1,13 +1,13 @@
 { 
 	"random_seed" : 20210504,
 	"num_folds" : 5,
-	"y_var" : "CC6620",
+	"y_var" : "CC66200",
 	"exclude_variables" : ["Date","CC6630","CC6620","CC66200"],
-	"boost_min_depth" : null,
-	"boost_min_shrinkage" : null,
-	"num_trees" : 500,
+	"boost_min_depth" : 22,
+	"boost_min_shrinkage" : 0.0005,
+	"num_trees" : 5000,
 	"boost_tuning" : {
-		"run_boost_tuning" : true,
+		"run_boost_tuning" : false,
 		"shrinkage_vals" : {
 			"from" : 0.001,
 			"by" : 0.001,
@@ -23,7 +23,6 @@
 		"exit_threshold" : 0.5
 	},
 	"boost_reduced_cf" : {
-		"run_reduced_cf" : false,
-		"market" : "DAM"
+		"run_reduced_cf" : true
 	}
 }

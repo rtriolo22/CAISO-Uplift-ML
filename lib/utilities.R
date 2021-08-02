@@ -138,8 +138,8 @@ backwardStepwiseSelection <- function(data, dep_var, covariates, test_ids, min_d
 }
 
 # Function to estimate a cross-fit full set of data
-crossFitReducedGBM <- function(data, dep_var, covariates, test_ids, min_depth, min_shrinkage, num_trees, market) {
-  load(paste0("results/",market,"/selection_result.RData"))
+crossFitReducedGBM <- function(data, dep_var, covariates, test_ids, min_depth, min_shrinkage, num_trees, result_file) {
+  load(result_file)
   drop_vars <- selection_result$result_table$Var.Name[2:(which.min(selection_result$result_table$MSE))]
   covariates <- covariates[!(covariates %in% drop_vars)]
   model_f <- paste0("log(", dep_var, ")") %>% buildFormula(covariates)
