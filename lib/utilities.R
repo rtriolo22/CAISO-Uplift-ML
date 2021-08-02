@@ -153,7 +153,7 @@ fitReducedGBM <- function(data, dep_var, covariates, min_depth, min_shrinkage, n
   drop_vars <- selection_result$result_table$Var.Name[2:(which.min(selection_result$result_table$MSE))]
   covariates <- covariates[!(covariates %in% drop_vars)]
   model_f <- paste0("log(", dep_var, ")") %>% buildFormula(covariates)
-  boost_uplift_model <- gbm(model_f, data = data, distribution = "gaussian", n.trees = 5000, 
+  boost_uplift_model <- gbm(model_f, data = data, distribution = "gaussian", n.trees = num_trees, 
                            interaction.depth = min_depth, 
                            shrinkage = min_shrinkage)
   return(boost_uplift_model)
