@@ -146,3 +146,17 @@ crossFitReducedGBM <- function(data, dep_var, covariates, test_ids, min_depth, m
   y_hat <- data %>% cf_gbm(model_f, test_ids, min_depth, min_shrinkage, num_trees)
   return(y_hat)
 }
+
+# Function to fit reduced model, use all data, not cross-fit
+fitReducedGBM <- function(data, dep_var, covariates, min_depth, min_shrinkage, num_trees, result_file) {
+  load(result_file)
+  drop_vars <- selection_result$result_table$Var.Name[2:(which.min(selection_result$result_table$MSE))]
+  covariates <- covariates[!(covariates %in% drop_vars)]
+  model_f <- paste0("log(", dep_var, ")") %>% buildFormula(covariates)
+  boost_uplift_model <- gbm(model_f, data = data, distribution = "gaussian", n.trees = 5000, 
+                           interaction.depth = min_depth, 
+                           shrinkage = min_shrinkage)
+  return(boost_uplift_model)
+}
+
+

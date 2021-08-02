@@ -89,23 +89,16 @@ if (settings$boost_reduced_cf$run_reduced_cf) {
   save(y_hat_cf, settings, file = result_f)
 }
 
-# 
-# # Fit reduced model
-# cat(paste0("Running:\n"))
-# model_f <- buildFormula(dep_var, covariates)
-# y_hat <- cf_gbm(model_f, model_data, test_ids, min.depth, min.shrinkage)
-# 
-# tibble(
-#   Type = c(rep("Predicted", 727), rep("Actual", 727)) %>% as.factor,
-#   Index = c(1:727, 1:727),
-#   Value = c(y_hat, log(model_data$CC6620))
-#   ) %>%
-#     ggplot(aes(x = Index, y = Value, color = Type)) +
-#       geom_line()
-# 
-# save(y_hat, file = "boosting_results/yhat_reduced_CF_boost.RData")
-# 
-# ########### END: FIT CROSS-FIT REDUCED MODEL ###########
+########### FIT REDUCED MODEL (ALL DATA, NOT CROSS-FIT) ###########
+if (settings$boost_reduced_cf$run_reduced) {
+  result_file <- paste0(local_path,"results/selection_result_",dep_var,".RData")
+  boost_reduced_model <- model_data %>%
+    fitReducedGBM(dep_var, covariates, min_depth, min_shrinkage, num_trees, result_file)
+  result_f <- paste0(local_path, "output/reduced_model_",dep_var,".RData")
+  save(boost_reduced_model, settings, file = result_f)
+}
+
+
 # 
 # ########### BEGIN: FIT FULL MODEL ###########
 # ## Fit full dataset, to view variable importance
