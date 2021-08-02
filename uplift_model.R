@@ -90,7 +90,7 @@ if (settings$boost_reduced_cf$run_reduced_cf) {
 }
 
 ########### FIT REDUCED MODEL (ALL DATA, NOT CROSS-FIT) ###########
-if (settings$boost_reduced_cf$run_reduced) {
+if (settings$boost_reduced$run_reduced) {
   result_file <- paste0(local_path,"results/selection_result_",dep_var,".RData")
   boost_reduced_model <- model_data %>%
     fitReducedGBM(dep_var, covariates, min_depth, min_shrinkage, num_trees, result_file)
