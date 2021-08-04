@@ -30,6 +30,8 @@ utilities_f <- paste0(local_path, "lib/utilities.R")
 source(utilities_f)
 messages_f <- paste0(local_path, "lib/messages.R")
 source(messages_f)
+robinson_f <- paste0(local_path, "lib/robinson_estimator.R")
+source(robinson_f)
 
 # Print begin message
 beginMessage()
@@ -98,6 +100,15 @@ if (settings$boost_reduced$run_reduced) {
   save(boost_reduced_model, settings, file = result_f)
 }
 
+########### COMPUTE MARGINAL EFFECTS ###########
+if (settings$marginal_effects$run_marginal_effects) {
+  result_file <- paste0(local_path,"results/selection_result_",dep_var,".RData")
+  load(result_file)
+  marginal_effects <- model_data %>%
+    computeMarginalEffects(dep_var, covariates, min_depth, min_shrinkage, num_trees, selection_result$result_table, test_folds)
+  result_f <- paste0(local_path, "output/marginal_effects_",dep_var,".RData")
+  save(marginal_effects, settings, file = result_f)
+}
 
 # 
 # ########### BEGIN: FIT FULL MODEL ###########

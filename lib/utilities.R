@@ -18,9 +18,17 @@ drawFolds <- function(n, K=5) {
   return(test_ids)
 }
 
-# Build formula string for models
-buildFormula <- function(dep_var, covariates) {
-  f <- paste0(covariates, collapse = " + ")
+# Function to build model formulas
+buildFormula <- function(dep_var, covariates, poly.2 = FALSE, cov_fct = c()) {
+  if (poly.2) {
+    covariates_cont <- covariates[!(covariates %in% cov_fct)]
+    covariates_fct <- covariates[(covariates %in% cov_fct)]
+    f <- paste0(covariates_cont, collapse = ", degree = 2, raw = TRUE) + poly(")
+    f <- paste0("poly(",f,", degree = 2, raw = TRUE)")
+    f <- paste0(f, " + ", paste0(covariates_fct, collapse = " + "))
+  } else {
+    f <- paste0(covariates, collapse = " + ")
+  }
   f <- paste0(dep_var, " ~ ", f)
   return(as.formula(f))
 }

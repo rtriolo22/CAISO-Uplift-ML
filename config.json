@@ -1,21 +1,21 @@
 { 
 	"random_seed" : 20210504,
 	"num_folds" : 5,
-	"y_var" : "CC66200",
-	"exclude_variables" : ["Date","CC6630","CC6620","CC66200"],
-	"boost_min_depth" : 22,
-	"boost_min_shrinkage" : 0.0005,
+	"y_var" : "CC6620",
+	"exclude_variables" : ["Date","Year","CC6630","CC6620","CC66200"],
+	"boost_min_depth" : null,
+	"boost_min_shrinkage" : null,
 	"num_trees" : 5000,
 	"boost_tuning" : {
-		"run_boost_tuning" : false,
+		"run_boost_tuning" : true,
 		"shrinkage_vals" : {
 			"from" : 0.001,
-			"by" : 0.001,
+			"by" : 0.00025,
 			"length.out" : 20
 		},
 		"depth_vals" : {
-			"min" : 5,
-			"max" : 12
+			"min" : 16,
+			"max" : 22
 		}
 	},
 	"boost_backward_selection" : {
@@ -26,6 +26,9 @@
 		"run_reduced_cf" : false
 	},
 	"boost_reduced" : {
-		"run_reduced" : true
+		"run_reduced" : false
+	},
+	"marginal_effects" : {
+		"run_marginal_effects" : false
 	}
 }
