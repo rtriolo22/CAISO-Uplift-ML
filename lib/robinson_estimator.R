@@ -5,6 +5,12 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
   # Focal covariate ## TODO: LOOP THROUGH ALL
   focal_covariate <- "Load.Mileage.MW"
   
+  covariates_full <- covariates
+  
+  cat("Full covariate list: ")
+  cat(covariates)
+  cat("\n\n")
+  
   # Tibble for results
   result <- tibble()
   
@@ -15,7 +21,7 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
   data[,focal_covariate] <- (data[,focal_covariate] - mean(unlist(data[,focal_covariate]))) / sd(unlist(data[,focal_covariate]))
   
   # Fit full OLS
-  model_f_ols <- buildFormula(dep_var_log, covariates)
+  model_f_ols <- buildFormula(dep_var_log, covariates_full)
   model_ols <- lm(model_f_ols, data = data)
   coef_ols <- coeftest(model_ols, vcov=vcovHC(model_ols, type='HC2'))
   coef_ols <- coef_ols[focal_covariate,]
@@ -36,6 +42,10 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
   drop_vars <- result_table$Var.Name[2:(which.min(result_table$MSE))]
   covariates <- covariates[!(covariates %in% drop_vars)]
   
+  cat("Reduced covariates: ")
+  cat(covariates)
+  cat("\n\n")
+  
   X.cov <- focal_covariate
   Y.cov <- dep_var_log
   Z.cov <- covariates[covariates != X.cov]
@@ -53,7 +63,7 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
     X.star = unlist(data[,X.cov] - EX.Z)
   )
   
-  model_gbm <- lm(Y.star ~ X.star, data = resid_data)
+  model_gbm <- lm(Y.star ~ X.star - 1, data = resid_data)
   coef_gbm <- coeftest(model_gbm, vcov=vcovHC(model_gbm, type='HC2')) #[2,]
   coef_gbm <- coef_gbm["X.star",]
   
@@ -66,6 +76,11 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
                      `Pr(>|t|)` = coef_gbm[4],
                      `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
                      `MSE E[X|Z]` = mean(resid_data$X.star^2)))
+  
+  # Estimate with BART
+  bart_result <- data %>% bart_robinson(focal_covariate, dep_var, covariates_full, test)
+  result <- result %>%
+    bind_rows(bart_result)
   
   return(result)
 }
@@ -138,64 +153,70 @@ computeMarginalEffects <- function(data, dep_var, covariates, min_depth, min_shr
 #                    `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
 #                    `MSE E[X|Z]` = mean(resid_data$X.star^2)))
 # 
-# ### BART
-# 
-# # Function to fit cross-fit BART
-# cf_bart <- function(dep_var, covariates, data, folds) {
-#   
-#   K <- length(folds)
-#   y.hat.full <- c()
-#   
-#   for (k in 1:K) {
-#     cat(paste0("  Fold ",k,"\n"))
-#     test_ix <- folds[[k]]
-#     
-#     X.train <- data[-test_ix, covariates] 
-#     X.train <- model.matrix(~ ., X.train)
-#     Y.train <- data[-test_ix, dep_var] %>% as.matrix
-#     X.test <- data[test_ix, covariates] 
-#     X.test <- model.matrix(~ ., X.test)
-#     
-#     bart.model <- bart(X.train, Y.train, keeptrees = TRUE)
-#     y.hat.bart <- predict(bart.model, newdata = X.test) %>% colMeans
-#     y.hat.full <- c(y.hat.full, y.hat.bart)
-#   }
-#   
-#   y.hat.ordered <- rep(NA, nrow(data))
-#   y.hat.ordered[unlist(folds)] <- y.hat.full
-#   return(y.hat.ordered)
-# }
-# 
-# model_data_bart <- model_data %>% 
-#   mutate(CC6620.log = log(CC6620))
-# bart_covariates_Z <- ols_covariates[ols_covariates != focal_covariate]
-# 
-# # Find E(Y|Z) with a cross-fit boosted tree
-# bart_Y <- "CC6620.log"
-# EY.Z <- cf_bart(dep_var = bart_Y, covariates = bart_covariates_Z, data = model_data_bart, folds = test)
-# 
-# # Find E(X|Z) with a boosted tree
-# bart_X <- focal_covariate
-# EX.Z <- cf_bart(dep_var = bart_X, covariates = bart_covariates_Z, data = model_data_bart, folds = test)
-# 
-# resid_data <- tibble(
-#   Y.star = log(model_data$CC6620) - EY.Z,
-#   X.star = unlist(model_data[,bart_X] - EX.Z)
-# )
-# 
-# model_bart <- lm(Y.star ~ X.star, data = resid_data)
-# coef_bart <- coeftest(model_bart, vcov=vcovHC(model_bart, type='HC2')) 
-# coef_bart <- coef_bart["X.star",] 
-# result <- result %>%
-#   bind_rows(tibble(Coefficient = focal_covariate, 
-#                    Method = "BART",
-#                    Estimate = coef_bart[1],
-#                    `Std. Error` = coef_bart[2],
-#                    `t value` = coef_bart[3],
-#                    `Pr(>|t|)` = coef_bart[4],
-#                    `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
-#                    `MSE E[X|Z]` = mean(resid_data$X.star^2)))
-# 
+### BART
+
+# Function to fit cross-fit BART model
+cf_bart <- function(dep_var, covariates, data, folds) {
+
+  K <- length(folds)
+  y.hat.full <- c()
+
+  for (k in 1:K) {
+    cat(paste0("  Fold ",k,"\n"))
+    test_ix <- folds[[k]]
+
+    X.train <- data[-test_ix, covariates]
+    X.train <- model.matrix(~ ., X.train)
+    Y.train <- data[-test_ix, dep_var] %>% as.matrix
+    X.test <- data[test_ix, covariates]
+    X.test <- model.matrix(~ ., X.test)
+
+    bart.model <- bart(X.train, Y.train, keeptrees = TRUE)
+    y.hat.bart <- predict(bart.model, newdata = X.test) %>% colMeans
+    y.hat.full <- c(y.hat.full, y.hat.bart)
+  }
+
+  y.hat.ordered <- rep(NA, nrow(data))
+  y.hat.ordered[unlist(folds)] <- y.hat.full
+  return(y.hat.ordered)
+}
+
+# Function to find marginal estimate with BART
+bart_robinson <- function(data, focal_covariate, dep_var, covariates_full, test) {
+  
+  model_data_bart <- data
+  dep_var_log <- paste0(dep_var,".log")
+  model_data_bart[,dep_var_log] <- model_data_bart[,dep_var] %>% log
+  bart_covariates_Z <- covariates_full[covariates_full != focal_covariate]
+
+  # Find E(Y|Z) with a cross-fit boosted tree
+  bart_Y <- dep_var_log
+  EY.Z <- cf_bart(dep_var = bart_Y, covariates = bart_covariates_Z, data = model_data_bart, folds = test)
+
+  # Find E(X|Z) with a boosted tree
+  bart_X <- focal_covariate
+  EX.Z <- cf_bart(dep_var = bart_X, covariates = bart_covariates_Z, data = model_data_bart, folds = test)
+
+  resid_data <- tibble(
+    Y.star = unlist(model_data_bart[,bart_Y]) - EY.Z,
+    X.star = unlist(model_data_bart[,bart_X] - EX.Z)
+  )
+
+  model_bart <- lm(Y.star ~ X.star - 1, data = resid_data)
+  coef_bart <- coeftest(model_bart, vcov=vcovHC(model_bart, type='HC2'))
+  coef_bart <- coef_bart["X.star",]
+  result <- tibble(Coefficient = focal_covariate,
+                   Method = "BART",
+                   Estimate = coef_bart[1],
+                   `Std. Error` = coef_bart[2],
+                   `t value` = coef_bart[3],
+                   `Pr(>|t|)` = coef_bart[4],
+                   `MSE E[Y|Z]` = mean(resid_data$Y.star^2),
+                   `MSE E[X|Z]` = mean(resid_data$X.star^2))
+
+  return(result)
+}
+
 # ####### LASSO #######
 # model_data_lasso <- model_data_bart
 # dep_var_lasso <- "CC6620.log"

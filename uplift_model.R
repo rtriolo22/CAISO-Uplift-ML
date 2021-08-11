@@ -9,6 +9,7 @@
 #####################################################################################
 
 # Load necessary packages
+suppressPackageStartupMessages(library(dbarts))
 suppressPackageStartupMessages(library(gbm))
 suppressPackageStartupMessages(library(glmnet))
 suppressPackageStartupMessages(library(lmtest))
