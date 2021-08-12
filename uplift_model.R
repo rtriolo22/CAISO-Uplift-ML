@@ -52,6 +52,7 @@ covariates <- covariates[!(covariates %in% settings$exclude_variables)]
 min_depth <- settings$boost_min_depth
 min_shrinkage <- settings$boost_min_shrinkage
 selection_threshold <- settings$boost_backward_selection$exit_threshold
+marginal_exclude <- settings$marginal_effects$exclude
 
 # Print status messages
 dependentVariableMessage(dep_var)
@@ -106,7 +107,7 @@ if (settings$marginal_effects$run_marginal_effects) {
   result_file <- paste0(local_path,"results/selection_result_",dep_var,".RData")
   load(result_file)
   marginal_effects <- model_data %>%
-    computeMarginalEffects(dep_var, covariates, min_depth, min_shrinkage, num_trees, selection_result$result_table, test_folds)
+    computeMarginalEffects(dep_var, covariates, min_depth, min_shrinkage, num_trees, selection_result$result_table, marginal_exclude, test_folds)
   result_f <- paste0(local_path, "output/marginal_effects_",dep_var,".RData")
   save(marginal_effects, settings, file = result_f)
 }

@@ -3,11 +3,11 @@
 	"num_folds" : 5,
 	"y_var" : "CC6620",
 	"exclude_variables" : ["Date","Year","CC6630","CC6620","CC66200"],
-	"boost_min_depth" : null,
-	"boost_min_shrinkage" : null,
+	"boost_min_depth" : 25,
+	"boost_min_shrinkage" : 0.003,
 	"num_trees" : 5000,
 	"boost_tuning" : {
-		"run_boost_tuning" : true,
+		"run_boost_tuning" : false,
 		"shrinkage_vals" : {
 			"from" : 0.001,
 			"by" : 0.00025,
@@ -29,6 +29,7 @@
 		"run_reduced" : false
 	},
 	"marginal_effects" : {
-		"run_marginal_effects" : false
+		"run_marginal_effects" : true,
+		"exclude" : ["Month", "Weekday.Ind"] 
 	}
 }
